@@ -4,6 +4,7 @@ public class FileTableEntry {          // Each table entry should have
    public final short iNumber;         //    this inode number
    public int count;                   //    # threads sharing this entry
    public final String mode;           //    "r", "w", "w+", or "a"
+   
    public FileTableEntry ( Inode i, short inumber, String m ) {
       seekPtr = 0;             // the seek pointer is set to the file top
       inode = i;

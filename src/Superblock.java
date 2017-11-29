@@ -35,17 +35,17 @@ class Superblock {
 	public void format(int inodes) {
 		totalInodes = inodes;
 
-		for(int i = 0; i < inodes; i++) {
+		for(int i = 0; i < inodes; ++i) {
 			Inode ins = new Inode();
 			ins.toDisk((short) i);
 		}
 
 		freeList = (totalInodes / 16) + 2;
 
-		for(int i = freeList; i < 64 - 1; i++) {
+		for(int i = freeList; i < 64 - 1; ++i) {
 			byte [] block = new byte[Disk.blockSize];
 
-			for(int j = 0; j < Disk.blockSize; j++)
+			for(int j = 0; j < Disk.blockSize; ++j)
 				block[j] = 0;
 
 			SysLib.int2bytes(i + 1, block, 0);

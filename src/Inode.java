@@ -53,7 +53,7 @@ public class Inode {
          flag = SysLib.bytes2short(data, offset);
          offset += 2;
 
-         for (int i = 0; i < directSize; i++, offset += 2)
+         for (int i = 0; i < directSize; ++i, offset += 2)
             direct[i] = SysLib.bytes2short(data, offset);
 
          indirect = SysLib.bytes2short(data, offset);
@@ -87,7 +87,7 @@ public class Inode {
          SysLib.short2bytes(flag, data, offset);
          offset += 2;
 
-         for (int i = 0; i < directSize; i++, offset += 2)
+         for (int i = 0; i < directSize; ++i, offset += 2)
             SysLib.short2bytes(direct[i], data, offset);
 
          SysLib.short2bytes(indirect, data, offset);
