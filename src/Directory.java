@@ -12,8 +12,8 @@ public class Directory {
          fsize[i] = 0;                 // all file size initialized to 0
       fnames = new char[maxInumber][maxChars];
       String root = "/";                // entry(inode) 0 is "/"
-      fsize[0] = root.length( );        // fsize[0] is the size of "/".
-      root.getChars( 0, fsize[0], fnames[0], 0 ); // fnames[0] includes "/"
+      fsize[0] = root.length() * 2;        // fsize[0] is the size of "/", 2bytes.
+      root.getChars( 0, root.length(), fnames[0], 0 ); // fnames[0] includes "/"
    }
 
    public int bytes2directory( byte data[] ) {

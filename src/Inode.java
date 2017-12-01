@@ -9,9 +9,9 @@
 ** 
 */
 public class Inode {
-   private final static int iNodeSize = 32;       // fix to 32 bytes
+   public final static int iNodeSize = 32;       // fix to 32 bytes
    private final static int directSize = 11;      // # direct pointers
-   private final static int totalInodes = 16;
+   private final static int totalInodes = Disk.blockSize / iNodeSize;
 
    public int length;                             // file size in bytes
    public short count;                            // # file-table entries pointing to this
@@ -39,16 +39,19 @@ public class Inode {
          int blockNum, offset;
          byte [] data = new byte[Disk.blockSize];
 
+         // read corresponding block into memory
          blockNum = (iNumber / totalInodes) + 1;
-
          SysLib.rawread(blockNum, data);
 
+         // Use offset to read iNode data from block
          offset = (iNumber % totalInodes) * iNodeSize;
 
          length = SysLib.bytes2int(data, offset);
          offset += 4;
+
          count = SysLib.bytes2short(data, offset);
          offset += 2;
+
          flag = SysLib.bytes2short(data, offset);
          offset += 2;
 
@@ -56,10 +59,15 @@ public class Inode {
             direct[i] = SysLib.bytes2short(data, offset);
 
          indirect = SysLib.bytes2short(data, offset);
-         offset += 2;
       }
-      return;
-
+      else {
+      	length = -1;
+      	count = -1;
+      	flag = -1;
+		for (int i = 0; i < directSize; ++i)
+            direct[i] = -1;
+      	indirect = -1;
+      }
    }
 
    /* 
@@ -72,15 +80,19 @@ public class Inode {
          int blockNum, offset;
          byte [] data = new byte[Disk.blockSize];
 
+         // read corresponding block into memory
          blockNum = (iNumber / totalInodes) + 1;
          SysLib.rawread(blockNum, data);
 
+         // use offset to write iNode data to block
          offset = (iNumber % totalInodes) * iNodeSize;
 
          SysLib.int2bytes(length, data, offset);
          offset += 4;
+
          SysLib.short2bytes(count, data, offset);
          offset += 2;
+
          SysLib.short2bytes(flag, data, offset);
          offset += 2;
 
@@ -89,10 +101,11 @@ public class Inode {
 
          SysLib.short2bytes(indirect, data, offset);
          offset += 2;
-         
-         SysLib.rawwrite(blockNum, data);
-      }
-      return;
-   }
 
+         // write block back to disk and return num bytes written
+         SysLib.rawwrite(blockNum, data);
+         return offset;
+      }
+      return -1;
+   }
 }
