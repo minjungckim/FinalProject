@@ -35,7 +35,6 @@ public class Inode {
    ** Constructor
    */
    Inode( short iNumber ) {                       // retrieving inode from disk
-      // design it by yourself.
       if(iNumber >= 0) {
          int blockNum, offset;
          byte [] data = new byte[Disk.blockSize];
@@ -69,8 +68,6 @@ public class Inode {
    ** Inode back into the disk.
    */
    int toDisk( short iNumber ) {                  // save to disk as the i-th inode
-      // design it by yourself.
-
       if(iNumber >= 0) {
          int blockNum, offset;
          byte [] data = new byte[Disk.blockSize];
