@@ -61,12 +61,12 @@ public class Inode {
          indirect = SysLib.bytes2short(data, offset);
       }
       else {
-      	length = -1;
-      	count = -1;
-      	flag = -1;
-		for (int i = 0; i < directSize; ++i)
+         length = -1;
+         count = -1;
+         flag = -1;
+      for (int i = 0; i < directSize; ++i)
             direct[i] = -1;
-      	indirect = -1;
+         indirect = -1;
       }
    }
 

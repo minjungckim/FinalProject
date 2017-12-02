@@ -1,10 +1,22 @@
-public class FileTable {
+import java.util.*;
 
-   private Vector table;         // the actual entity of this file table
+// public enum FLAG {
+//    UNUSED(0), USED(1), READ(2), WRITE(3);
+   
+//    private final int flagNum;
+
+//    public FLAG (int flagNum) {
+//       this.flagNum = flagNum;
+//    }
+// }
+
+public class FileTable {
+   private final int UNUSED = 0, USED = 1, READ = 2, WRITE = 3;
+   private Vector<FileTableEntry> table;         // the actual entity of this file table
    private Directory dir;        // the root directory 
 
    public FileTable( Directory directory ) { // constructor
-      table = new Vector( );     // instantiate a file (structure) table
+      table = new Vector<FileTableEntry>();     // instantiate a file (structure) table
       dir = directory;           // receive a reference to the Director
    }                             // from the file system
 
@@ -15,6 +27,57 @@ public class FileTable {
       // increment this inode's count
       // immediately write back this inode to the disk
       // return a reference to this file (structure) table entry
+      short inum = -1;
+      Inode inode;
+
+      for(;;) {
+         if (filename.equals("/"))
+            inum = 0;
+         else
+            inum = this.dir.namei(filename);
+
+         if(inum == -1 && mode.equals("r")) { // Wasn't found but wanted it to be read
+            return null;
+         }
+         else if(inum >= 0) { // Found it
+            if(mode.equals("r")) {
+               if(inode.flag != WRITE) {
+                  inode.flag = READ;
+                  break;
+               }
+               
+               try { // If the flag is set to write, wait until it's done
+                  wait();
+               }
+               catch (InterruptedException ex) {
+               }
+            }
+            else {
+               if(inode.flag == USED || inode.flag == UNUSED) {
+                  inode.flag = WRITE;
+                  break;
+               }
+
+               try {
+                  wait();
+               }
+               catch(InterruptedException ex) {
+               }
+            }
+         } 
+         else {
+            inum = dir.ialloc(filename);
+            inode = new Inode(inum);
+            inode.flag = WRITE;
+            break;
+         }
+      }
+
+      inode.count++;
+      inode.toDisk(inum);
+      FileTableEntry newEntry = new FileTableEntry(inode, inum, mode);
+      table.addElement(newEntry);
+      return newEntry;
    }
 
    public synchronized boolean ffree( FileTableEntry e ) {
@@ -22,6 +85,25 @@ public class FileTable {
       // save the corresponding inode to the disk
       // free this file table entry.
       // return true if this file table entry found in my table
+      Inode curInode = new Inode(e.iNumber);
+
+      if (this.table.remove(e))
+        {   
+            if (curInode.flag == READ && curInode.count == 1)
+            {
+               notify();
+               curInode.flag = USED;
+            }
+            if (curInode.flag == WRITE)
+            {
+                e.inode.flag = USED;
+                notifyAll();
+            }
+            curInode.count--;
+            curInode.toDisk(e.iNumber);
+            return true;
+        }
+        else return false;
    }
 
    public synchronized boolean fempty( ) {
