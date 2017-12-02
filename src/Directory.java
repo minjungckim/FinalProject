@@ -27,6 +27,7 @@ public class Directory {
          String curFName = new String(data, offset, 60);
          curFName.getChars(0, this.fsize[i], this.fnames[i], 0);
       }
+      return offset;
    }
 
    public byte[] directory2bytes( ) {
@@ -89,7 +90,7 @@ public class Directory {
       short i = 0, retVal = -1;
       while(i < totalDirSize) {
          String curFName = new String(this.fnames[i], 0, this.fsize[i]);
-         if(filename.length() == this.size[i] && filename.equals(curFName)) {
+         if(filename.length() == this.fsize[i] && filename.equals(curFName)) {
             retVal = i;
             return retVal;
          }

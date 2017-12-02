@@ -50,14 +50,14 @@ class Superblock {
 		
 		// write pointer to next free block for each free block
 		byte [] block = new byte[Disk.blockSize];
-		for(int i = freeList; i < Disk.diskSize; ++i) {
+		for(int i = freeList; i < Disk.blockSize; ++i) {
 			SysLib.int2bytes(i + 1, block, 0);
 			SysLib.rawwrite(i, block);
 		}
 
 		// write -1 to last block to show end of freeList
 		SysLib.int2bytes(-1, block, 0);
-		SysLib.rawwrite(Disk.diskSize - 1, block);
+		SysLib.rawwrite(Disk.blockSize - 1, block);
 
 		// synch superblock data back to disk
 		synch();
