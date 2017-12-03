@@ -25,7 +25,7 @@ public class Inode {
    Inode( ) {                                     // a default constructor
       length = 0;
       count = 0;
-      flag = 1;
+      flag = 0;
       for ( int i = 0; i < directSize; i++ )
          direct[i] = -1;
       indirect = -1;
@@ -108,4 +108,6 @@ public class Inode {
       }
       return -1;
    }
+
+
 }

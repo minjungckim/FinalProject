@@ -75,4 +75,12 @@ class Superblock {
 		SysLib.int2bytes(freeList, superblock, 8);
 		SysLib.rawwrite(0, superblock);
 	}
+
+	public void addToFreeList(int block)
+	{
+		byte[] nextFreeBlock = new byte[4];
+		SysLib.int2bytes(freeList, nextFreeBlock, 0);
+		SysLib.rawwrite(block, nextFreeBlock);
+		freeList = block;
+	}
 }
