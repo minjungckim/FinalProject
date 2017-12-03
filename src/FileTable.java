@@ -29,6 +29,7 @@ public class FileTable {
       // return a reference to this file (structure) table entry
       short inum = -1;
       Inode inode;
+      int seekPtr = 0;
 
       for(;;) {
          // lookup filename in directory to get inum
@@ -62,6 +63,7 @@ public class FileTable {
             if(mode.equals("r")) {
                
                inode.flag = READ;
+
                break;
             }
             // Writing should wait for reading to finish also
@@ -85,6 +87,7 @@ public class FileTable {
                }
                else if(mode.equals("a")) {
                   inode.flag = APPEND;
+                  seekPtr = inode.length;
                   break;
                }
                else {
@@ -100,6 +103,7 @@ public class FileTable {
 
       // Allocate new FileTableEntry in the FileTable and return a ref to it
       FileTableEntry newEntry = new FileTableEntry(inode, inum, mode);
+      newEntry.seekPtr = seekPtr;
       table.addElement(newEntry);
       return newEntry;
    }

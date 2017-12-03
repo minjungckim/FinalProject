@@ -83,4 +83,14 @@ class Superblock {
 		SysLib.rawwrite(block, nextFreeBlock);
 		freeList = block;
 	}
+
+	public int allocFromFreeList()
+	{
+		byte[] nextFreeBlock = new byte[4];
+		SysLib.rawread(freeList, nextFreeBlock);
+		int nextFree = SysLib.bytes2int(nextFreeBlock, 0);
+		int allocBlock = freeList;
+		freeList = nextFree;
+		return allocBlock;
+	}
 }
