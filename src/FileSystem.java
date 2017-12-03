@@ -51,6 +51,8 @@ public class FileSystem {
 
 	int read(FileTableEntry ftEnt, byte[] buffer)
 	{
+		if(!ftEnt.mode.equals("r") && !ftEnt.mode.equals("w+")) return -1;
+
 		Inode entNode = ftEnt.inode;
 		byte[] tempBuffer = new byte[Disk.blockSize];
 		int bytesRead = 0;
@@ -75,20 +77,70 @@ public class FileSystem {
 			SysLib.rawread(currentBlock, tempBuffer);
 			
 			// copy each byte until reaching EOF, end of buffer, or end of tempBuffer
-			for(int i = innerOffset; i < tempBuffer.length && ftEnt.seekPtr < entNode.length && bytesRead < buffer.length; ++i)
+			for(int i = innerOffset; i < tempBuffer.length && ftEnt.seekPtr < entNode.length && bytesRead < buffer.length; ++i, ++ftEnt.seekPtr)
 			{
 				buffer[bytesRead++] = tempBuffer[i];
 			}
 			innerOffset = 0;
 			blockOffset++;
 		}
-		ftEnt.seekPtr += bytesRead;
 		return bytesRead;
 	}
 
 	int write(FileTableEntry ftEnt, byte[] buffer)
 	{
-		
+		if(ftEnt.mode.equals("r")) return -1;
+
+		Inode entNode = ftEnt.inode;
+		byte[] tempBuffer = new byte[Disk.blockSize];
+		int bytesWritten = 0;
+
+		// Calculate which direct or idirect ref to start, then offset within
+		int blockOffset = ftEnt.seekPtr / Disk.blockSize;
+		int innerOffset = ftEnt.seekPtr % Disk.blockSize;
+
+		// Each iteration writes to one block using buffer
+		while(bytesWritten < buffer.length)
+		{
+			// Figure out the current block using seek Ptr, and read into memory
+			// If seek goes past EOF, alloc another block for the file
+			int currentBlock = -1;
+			if(blockOffset < entNode.direct.length) {
+				currentBlock = entNode.direct[blockOffset]; 
+				if(currentBlock == -1)
+				{
+					currentBlock = superblock.allocFromFreeList();
+					entNode.direct[blockOffset] = currentBlock;
+				}
+			}
+			else
+			{
+				SysLib.rawread(entNode.indirect, tempBuffer);
+				currentBlock = SysLib.bytes2int(tempBuffer, (blockOffset - entNode.direct.length) * 4);
+				if(currentBlock == -1)
+				{	
+					currentBlock = superblock.allocFromFreeList();
+					SysLib.int2bytes(currentBlock, tempBuffer, (blockOffset - entNode.direct.length) * 4);
+					SysLib.rawwrite(entNode.indirect, tempBuffer);
+				}
+			}
+
+			SysLib.rawread(currentBlock, tempBuffer);
+			
+			// copy each byte until reaching EOF, end of buffer, or end of tempBuffer
+			for(int i = innerOffset; i < tempBuffer.length && bytesWritten < buffer.length; ++i, ++ftEnt.seekPtr)
+			{
+				tempBuffer[i] = buffer[bytesWritten++];
+			}
+			innerOffset = 0;
+			blockOffset++;
+
+			SysLib.rawwrite(currentBlock, tempBuffer);
+		}
+		// Increase file size if we wrote past EOF
+		if(ftEnt.seekPtr > entNode.length) entNode.length = ftEnt.seekPtr;
+
+		return bytesWritten;
 	}
 
 	private boolean deallocAllBlocks(FileTableEntry ftEnt)
