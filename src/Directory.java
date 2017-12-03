@@ -4,7 +4,6 @@ public class Directory {
    // Directory entries
    private int fsize[];        // each element stores a different file size.
    private char fnames[][];    // each element stores a different file name.
-   private int totalDirSize;
 
    public Directory( int maxInumber ) { // directory constructor
       fsize = new int[maxInumber];     // maxInumber = max files
@@ -12,21 +11,24 @@ public class Directory {
          fsize[i] = 0;                 // all file size initialized to 0
       fnames = new char[maxInumber][maxChars];
       String root = "/";                // entry(inode) 0 is "/"
-      fsize[0] = root.length() * 2;        // fsize[0] is the size of "/", 2bytes.
-      root.getChars( 0, root.length(), fnames[0], 0 ); // fnames[0] includes "/"
+      fsize[0] = root.length();        // fsize[0] is the size of "/", 2bytes.
+      root.getChars( 0, fsize[0], fnames[0], 0 ); // fnames[0] includes "/"
    }
 
    public int bytes2directory( byte data[] ) {
       // assumes data[] received directory information from disk
       // initializes the Directory instance with this data[]
       int offset = 0;
+      // Save file size data
       for (int i = 0; i < this.fsize.length; ++i, offset += 4)
          fsize[i] = SysLib.bytes2int(data, offset);
 
-      for (int i = 0; i < this.fnames.length; ++i, offset += 60) {
-         String curFName = new String(data, offset, 60);
+      // Save file name data
+      for (int i = 0; i < this.fnames.length; ++i, offset += maxChars * 2) {
+         String curFName = new String(data, offset, maxChars * 2);
          curFName.getChars(0, this.fsize[i], this.fnames[i], 0);
       }
+      // return number of bytes used
       return offset;
    }
 
@@ -36,16 +38,21 @@ public class Directory {
       // note: only meaningfull directory information should be converted
       // into bytes.
       int offset = 0;
-      byte [] data = new byte[64 * fsize.length];
 
+      // size of directory is 2 bytes for each file name char and 4 for each size
+      byte [] data = new byte[((maxChars * 2) + 4) * fsize.length];
+
+      // write fsize first
       for (int i = 0; i < this.fsize.length; ++i, offset += 4)
          SysLib.int2bytes(this.fsize[i], data, offset);
 
-      for(int i = 0; i < this.fnames.length; ++i, offset += 60) {
+      // write fnames next, each taking up maxchars * 2 bytes
+      for(int i = 0; i < this.fnames.length; ++i, offset += maxChars * 2) {
          String cur = new String(this.fnames[i], 0, fsize[i]);
          byte [] temp = cur.getBytes();
 
-         for(int j = 0; j < data.length; ++j, offset++) {
+         // write each byte from name to data buffer
+         for(int j = offset; j < temp.length; ++j) {
             data[j] = temp[j];
          }
       }
@@ -55,24 +62,25 @@ public class Directory {
    public short ialloc( String filename ) {
       // filename is the one of a file to be created.
       // allocates a new inode number for this filename
-      short i = 0, retVal = -1;
-      while(i < totalDirSize) {
-         if(this.fsize[i] == 0) {
+      short i = 0;
+      while(i < this.fsize.length) {
+         // find the first slot with no file
+         if(this.fsize[i] <= 0) {
+            // save the filename length or use maxChars, whichever is smaller
             int ins;
-            
             if(filename.length() < maxChars)
                ins = filename.length();
             else 
                ins = maxChars;
-
             this.fsize[i] = ins;
-            retVal = i;
+            
+            // save the filename and return it's Inode number
             filename.getChars(0, this.fsize[i], this.fnames[i], 0);
-            return retVal;
+            return i;
          }
-         i++;
+         ++i;
       }
-      return retVal; // Return error
+      return -1; // Return error
    }
 
    public boolean ifree( short iNumber ) {
@@ -87,15 +95,13 @@ public class Directory {
 
    public short namei( String filename ) {
       // returns the inumber corresponding to this filename
-      short i = 0, retVal = -1;
-      while(i < totalDirSize) {
+      short i = 0;
+      while(i < this.fsize.length) {
          String curFName = new String(this.fnames[i], 0, this.fsize[i]);
-         if(filename.length() == this.fsize[i] && filename.equals(curFName)) {
-            retVal = i;
-            return retVal;
-         }
+         if(filename.length() == this.fsize[i] && filename.equals(curFName))
+            return i;
          i++; 
       }
-      return retVal; // Error finding the iNumber corresponding to fName
+      return -1; // Error finding the iNumber corresponding to fName
    }
 }
