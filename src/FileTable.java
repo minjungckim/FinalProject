@@ -1,17 +1,7 @@
 import java.util.*;
 
-// public enum FLAG {
-//    UNUSED(0), USED(1), READ(2), WRITE(3), WRITE+(4), APPEND(5);
-   
-//    private final int flagNum;
-
-//    public FLAG (int flagNum) {
-//       this.flagNum = flagNum;
-//    }
-// }
-
 public class FileTable {
-   private final int UNUSED = 0, USED = 1, READ = 2, WRITE = 3, WRITEP = 4, APPEND = 5;
+   private final static int UNUSED = 0, USED = 1, READ = 2, WRITE = 3, WRITEP = 4, APPEND = 5;
    private Vector<FileTableEntry> table;         // the actual entity of this file table
    private Directory dir;        // the root directory 
 
@@ -28,7 +18,7 @@ public class FileTable {
       // immediately write back this inode to the disk
       // return a reference to this file (structure) table entry
       short inum = -1;
-      Inode inode;
+      Inode inode = null;
       int seekPtr = 0;
 
       for(;;) {
@@ -38,17 +28,7 @@ public class FileTable {
          else
             inum = this.dir.namei(filename);
 
-         if(inum == -1 && mode.equals("r")) { // Wasn't found but wanted to read
-            return null;
-         }
-         else if(inum == -1 && mode.equals("w")){ // Wasn't found, want to write
-            // allocate new file in the directory, and use inum to allocate new Inode
-            inum = dir.ialloc(filename);
-            inode = new Inode(inum);
-            inode.flag = WRITE;
-            break;
-         }
-         else if(inum >= 0) { // Found it
+         if(inum >= 0) { // Found it
             inode = new Inode(inum);
             // If the flag is set to write, wait until it's done
             while(inode.flag > READ) {
@@ -93,8 +73,23 @@ public class FileTable {
                else {
                  return null;
                }
-            }
+            } 
          } 
+         else if(inum < 0 && (mode.equals("w") || mode.equals("a") || mode.equals("w+"))) { // Wasn't found, want to write
+            // allocate new file in the directory, and use inum to allocate new Inode
+            inum = dir.ialloc(filename);
+            inode = new Inode(inum);
+
+            if(mode.equals("w"))
+               inode.flag = WRITE;
+            else if(mode.equals("w+"))
+               inode.flag = WRITEP;
+            else  
+               inode.flag = APPEND;
+
+            break;
+         } 
+         else return null;
       }
 
       // Increment Inode count, write back to disk

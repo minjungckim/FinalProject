@@ -23,9 +23,8 @@ class Superblock {
 		freeList = SysLib.bytes2int(superblock, 8);
 
 		// check that superblock contains expected data
-		if (totalBlocks == diskSize && totalInodes > 0 && freeList >= 2)
+		if ((totalBlocks == diskSize) && (totalInodes > 0 && freeList >= 2))
 			return;
-
 		// otherwise, format file system
 		totalBlocks = diskSize;
 		format(defaultTotalInodes);
@@ -50,14 +49,14 @@ class Superblock {
 		
 		// write pointer to next free block for each free block
 		byte [] block = new byte[Disk.blockSize];
-		for(int i = freeList; i < Disk.diskSize; ++i) {
+		for(int i = freeList; i < Disk.blockSize; ++i) {
 			SysLib.int2bytes(i + 1, block, 0);
 			SysLib.rawwrite(i, block);
 		}
 
 		// write -1 to last block to show end of freeList
 		SysLib.int2bytes(-1, block, 0);
-		SysLib.rawwrite(Disk.diskSize - 1, block);
+		SysLib.rawwrite(Disk.blockSize - 1, block);
 
 		// synch superblock data back to disk
 		synch();
@@ -93,4 +92,17 @@ class Superblock {
 		freeList = nextFree;
 		return allocBlock;
 	}
+
+	public int getNextFreeBlock() {
+		if(this.freeList < 0 || freeList > totalBlocks)
+			return -1;
+    	else {
+    		byte[] nextFree = new byte[Disk.blockSize];
+    		SysLib.rawread(freeList, nextFree);
+
+    		int firstFree = freeList;
+    		freeList = SysLib.bytes2int(nextFree, 0);
+    		return firstFree; 
+    	}
+    }	
 }
