@@ -64,12 +64,12 @@ public class FileSystem {
 		return filetable.falloc(filename, mode);
 	}
 
-	boolean close(FileTableEntry ftEnt)
+	synchronized boolean close(FileTableEntry ftEnt)
 	{
 		return filetable.ffree(ftEnt);
 	}
 
-	int fsize(FileTableEntry ftEnt)
+	synchronized int fsize(FileTableEntry ftEnt)
 	{
 		return ftEnt.inode.length;
 	}
@@ -209,7 +209,8 @@ public class FileSystem {
 		}
 		// Increase file size if we wrote past EOF
 		if(ftEnt.seekPtr > entNode.length) entNode.length = ftEnt.seekPtr;
-		
+		ftEnt.inode.toDisk(ftEnt.iNumber); // Need to write back to disk
+ 
 		// Set flag back to unused and notify anything waiting
 		entNode.flag = Inode.UNUSED;
 		notify();
@@ -219,30 +220,20 @@ public class FileSystem {
 
 	boolean delete(String filename)
 	{
-		// Remove file from directory
-		short inum = directory.namei(filename);
-		if(!directory.ifree(inum))
-			return false;
-
-		// Wait until file is not open
-		Inode inode = new Inode(inum);
-		while(inode.count > 0)
-		{
-			try
-			{
-				wait();
-			}
-			catch(InterruptedException ex){}
-		}
-		// Dealloc all file data
-		return inode.deallocAllBlocks(inum, superblock);
+		// Get the file we want to delete 
+		short toDelete = directory.namei(filename);
+		FileTableEntry ftEnt = open(filename, "r"); // Try to open this file with the given filename
+		
+		// If we were able to close and deallocates the inumber and its corresponding file,
+		// it should return true
+		return (close(ftEnt) && directory.ifree(toDelete));
 	}
 
 	private final int SEEK_SET = 0;
 	private final int SEEK_CUR = 1;
 	private final int SEEK_END = 2;
 
-	int seek(FileTableEntry ftEnt, int offset, int whence)
+	synchronized int seek(FileTableEntry ftEnt, int offset, int whence)
 	{
 		switch(whence)
 		{
