@@ -220,13 +220,16 @@ public class FileSystem {
 
 	boolean delete(String filename)
 	{
-		// Get the file we want to delete 
-		short toDelete = directory.namei(filename);
-		FileTableEntry ftEnt = open(filename, "r"); // open the file with the filename
-		
-		// If we were able to close and deallocates the inumber and its corresponding file,
-		// it should return true
-		return (close(ftEnt) && directory.ifree(toDelete));
+		// Remove file from directory
+ -		short inum = directory.namei(filename);
+ -		if(!directory.ifree(inum))
+ -			return false;
+ -
+ -		// Load Inode from disk
+ -		Inode inode = new Inode(inum);
+
+ -		// Dealloc all file data
+ -		return inode.deallocAllBlocks(inum, superblock);
 	}
 
 	private final int SEEK_SET = 0;
