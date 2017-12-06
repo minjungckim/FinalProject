@@ -144,7 +144,7 @@ public class FileSystem {
 		}
 
 		// Set Inode flag to write
-		entNode.fTE;
+		entNode.flag = Inode.WRITE;
 
 		byte[] tempBuffer = new byte[Disk.blockSize];
 		int bytesWritten = 0;
