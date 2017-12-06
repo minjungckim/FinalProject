@@ -221,15 +221,15 @@ public class FileSystem {
 	boolean delete(String filename)
 	{
 		// Remove file from directory
- -		short inum = directory.namei(filename);
- -		if(!directory.ifree(inum))
- -			return false;
- -
- -		// Load Inode from disk
- -		Inode inode = new Inode(inum);
+		short inum = directory.namei(filename);
+		if(!directory.ifree(inum))
+			return false;
 
- -		// Dealloc all file data
- -		return inode.deallocAllBlocks(inum, superblock);
+		// Load Inode from disk
+		Inode inode = new Inode(inum);
+
+		// Dealloc all file data
+		return inode.deallocAllBlocks(inum, superblock);
 	}
 
 	private final int SEEK_SET = 0;
