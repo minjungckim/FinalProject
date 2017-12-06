@@ -150,6 +150,7 @@ public class Inode {
 				else
 					superblock.addToFreeList(block);
 			}
+			superblock.addToFreeList(indirect);
 		}
 
 		// Write new empty Inode at iNum
