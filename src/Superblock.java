@@ -78,7 +78,7 @@ class Superblock {
 
 	public void addToFreeList(int block)
 	{
-		byte[] nextFreeBlock = new byte[4];
+		byte[] nextFreeBlock = new byte[Disk.blockSize];
 		SysLib.int2bytes(freeList, nextFreeBlock, 0);
 		SysLib.rawwrite(block, nextFreeBlock);
 		freeList = block;
