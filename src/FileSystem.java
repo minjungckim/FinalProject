@@ -144,7 +144,7 @@ public class FileSystem {
 		}
 
 		// Set Inode flag to write
-		entNode.flag = Inode.WRITE;
+		entNode.fTE;
 
 		byte[] tempBuffer = new byte[Disk.blockSize];
 		int bytesWritten = 0;
@@ -222,7 +222,7 @@ public class FileSystem {
 	{
 		// Get the file we want to delete 
 		short toDelete = directory.namei(filename);
-		FileTableEntry ftEnt = open(filename, "r"); // Try to open this file with the given filename
+		FileTableEntry ftEnt = open(filename, "r"); // open the file with the filename
 		
 		// If we were able to close and deallocates the inumber and its corresponding file,
 		// it should return true
