@@ -64,12 +64,12 @@ public class FileSystem {
 		return filetable.falloc(filename, mode);
 	}
 
-	synchronized boolean close(FileTableEntry ftEnt)
+	boolean close(FileTableEntry ftEnt)
 	{
 		return filetable.ffree(ftEnt);
 	}
 
-	synchronized int fsize(FileTableEntry ftEnt)
+	int fsize(FileTableEntry ftEnt)
 	{
 		return ftEnt.inode.length;
 	}
@@ -236,7 +236,7 @@ public class FileSystem {
 	private final int SEEK_CUR = 1;
 	private final int SEEK_END = 2;
 
-	synchronized int seek(FileTableEntry ftEnt, int offset, int whence)
+	int seek(FileTableEntry ftEnt, int offset, int whence)
 	{
 		switch(whence)
 		{
